@@ -1,5 +1,5 @@
+import React, { useEffect, useState } from 'react';
 import { VideoPlayer } from '@/components/VideoPlayer';
-import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
 const Stream = () => {
