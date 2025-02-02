@@ -13,17 +13,37 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Connect to WebSocket server
+    console.log('Connecting to WebSocket server...');
     socketRef.current = io('http://localhost:3001', {
       transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
-    // Listen for video sync events
+    socketRef.current.on('connect', () => {
+      console.log('Connected to WebSocket server');
+      setIsConnected(true);
+      toast({
+        title: "Connected",
+        description: "Successfully connected to stream",
+      });
+    });
+
+    socketRef.current.on('connect_error', (error: Error) => {
+      console.error('Connection error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to connect to stream server",
+        variant: "destructive",
+      });
+    });
+
     socketRef.current.on('videoSync', (data: { 
       isPlaying: boolean; 
       currentTime: number;
@@ -32,7 +52,7 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
       if (videoRef.current) {
         videoRef.current.currentTime = data.currentTime;
         if (data.isPlaying) {
-          videoRef.current.play();
+          videoRef.current.play().catch(console.error);
         } else {
           videoRef.current.pause();
         }
@@ -40,25 +60,8 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
       }
     });
 
-    // Handle connection events
-    socketRef.current.on('connect', () => {
-      console.log('Connected to WebSocket server');
-      toast({
-        title: "Connected",
-        description: "Successfully connected to stream",
-      });
-    });
-
-    socketRef.current.on('disconnect', () => {
-      console.log('Disconnected from WebSocket server');
-      toast({
-        title: "Disconnected",
-        description: "Lost connection to stream",
-        variant: "destructive",
-      });
-    });
-
     return () => {
+      console.log('Cleaning up socket connection');
       socketRef.current?.disconnect();
     };
   }, [toast]);
@@ -71,8 +74,7 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
       const progress = (video.currentTime / video.duration) * 100;
       setProgress(progress);
 
-      // If admin, sync video state with other viewers
-      if (isAdmin) {
+      if (isAdmin && isConnected) {
         socketRef.current?.emit('videoSync', {
           isPlaying: !video.paused,
           currentTime: video.currentTime,
@@ -82,20 +84,19 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
 
     video.addEventListener('timeupdate', updateProgress);
     return () => video.removeEventListener('timeupdate', updateProgress);
-  }, [isAdmin]);
+  }, [isAdmin, isConnected]);
 
   const togglePlay = () => {
-    if (!videoRef.current || (!isAdmin && !socketRef.current?.connected)) return;
+    if (!videoRef.current) return;
 
     if (isPlaying) {
       videoRef.current.pause();
     } else {
-      videoRef.current.play();
+      videoRef.current.play().catch(console.error);
     }
     setIsPlaying(!isPlaying);
 
-    // Only admin can control playback
-    if (isAdmin) {
+    if (isAdmin && isConnected) {
       socketRef.current?.emit('videoSync', {
         isPlaying: !isPlaying,
         currentTime: videoRef.current.currentTime,
@@ -128,18 +129,17 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
       />
       <div className="video-controls absolute bottom-0 left-0 right-0 bg-black/60 p-4">
         <div className="flex items-center gap-4">
-          {isAdmin && (
-            <button
-              onClick={togglePlay}
-              className="text-white hover:text-primary/80 transition-colors"
-            >
-              {isPlaying ? (
-                <Pause className="w-6 h-6" />
-              ) : (
-                <Play className="w-6 h-6" />
-              )}
-            </button>
-          )}
+          <button
+            onClick={togglePlay}
+            className="text-white hover:text-primary/80 transition-colors"
+            disabled={!isAdmin && !isConnected}
+          >
+            {isPlaying ? (
+              <Pause className="w-6 h-6" />
+            ) : (
+              <Play className="w-6 h-6" />
+            )}
+          </button>
           <button
             onClick={toggleMute}
             className="text-white hover:text-primary/80 transition-colors"
