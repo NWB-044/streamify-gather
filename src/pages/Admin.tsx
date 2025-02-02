@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { requireAdmin } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
