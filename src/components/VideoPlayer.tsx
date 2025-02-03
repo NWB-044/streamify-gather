@@ -33,6 +33,11 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
         title: "Connected",
         description: "Successfully connected to stream",
       });
+
+      // Request initial sync if not admin
+      if (!isAdmin) {
+        socketRef.current?.emit('requestSync');
+      }
     });
 
     socketRef.current.on('connect_error', (error: Error) => {
@@ -50,7 +55,12 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
     }) => {
       console.log('Received sync event:', data);
       if (videoRef.current) {
-        videoRef.current.currentTime = data.currentTime;
+        // Add a small buffer for smoother sync
+        const timeDiff = Math.abs(videoRef.current.currentTime - data.currentTime);
+        if (timeDiff > 0.5) {
+          videoRef.current.currentTime = data.currentTime;
+        }
+        
         if (data.isPlaying) {
           videoRef.current.play().catch(console.error);
         } else {
@@ -64,7 +74,7 @@ export const VideoPlayer = ({ src, isAdmin = false }: VideoPlayerProps) => {
       console.log('Cleaning up socket connection');
       socketRef.current?.disconnect();
     };
-  }, [toast]);
+  }, [toast, isAdmin]);
 
   useEffect(() => {
     const video = videoRef.current;
