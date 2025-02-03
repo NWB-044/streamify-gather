@@ -13,7 +13,10 @@ const Admin = () => {
     ramUsage: 0,
     freeMemory: 0,
     onlineViewers: 0,
-    bandwidth: { download: 0, upload: 0 },
+    bandwidth: {
+      download: 0,
+      upload: 0
+    },
     latency: 0
   });
 

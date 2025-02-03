@@ -4,11 +4,11 @@ interface SystemMetrics {
   ramUsage: number;
   freeMemory: number;
   onlineViewers: number;
-  bandwidth?: {
+  bandwidth: {
     download: number;
     upload: number;
   };
-  latency?: number;
+  latency: number;
 }
 
 class MonitoringService {
@@ -16,7 +16,12 @@ class MonitoringService {
   private metrics: SystemMetrics = {
     ramUsage: 0,
     freeMemory: 0,
-    onlineViewers: 0
+    onlineViewers: 0,
+    bandwidth: {
+      download: 0,
+      upload: 0
+    },
+    latency: 0
   };
 
   constructor() {
@@ -25,7 +30,7 @@ class MonitoringService {
 
   private initializeSocket() {
     console.log('Initializing monitoring socket connection...');
-    this.socket = io('http://localhost:3001/monitoring', {
+    this.socket = io('http://localhost:3001', {
       transports: ['websocket'],
       reconnectionAttempts: 5
     });
