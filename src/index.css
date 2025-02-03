@@ -27,11 +27,11 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
+    --background: 240 10% 8%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
+    --card: 240 10% 8%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
+    --popover: 240 10% 8%;
     --popover-foreground: 0 0% 98%;
     --primary: 0 0% 98%;
     --primary-foreground: 240 5.9% 10%;
@@ -59,22 +59,22 @@
   }
 }
 
+.glass-card {
+  @apply bg-secondary/30 backdrop-blur-md border border-white/10 rounded-lg shadow-lg;
+}
+
 .video-player-container {
-  @apply relative w-full aspect-video bg-black rounded-lg overflow-hidden;
+  @apply relative w-full aspect-video bg-black/90 rounded-lg overflow-hidden shadow-xl;
 }
 
 .video-controls {
-  @apply absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent;
+  @apply absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .video-player-container:hover .video-controls {
   opacity: 1;
-}
-
-.glass-card {
-  @apply bg-secondary/30 backdrop-blur-md border border-white/10 rounded-lg;
 }
 
 .fade-in {
