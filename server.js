@@ -1,9 +1,11 @@
-const express = require('express');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const os = require('os');
+import express from 'express';
+import { Server } from 'socket.io';
+import cors from 'cors';
+import os from 'os';
+import { createServer } from 'http';
+
 const app = express();
-const server = require('http').createServer(app);
+const server = createServer(app);
 
 const io = new Server(server, {
   cors: {
