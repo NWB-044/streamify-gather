@@ -1,50 +1,50 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { AdminAuth } from '@/components/AdminAuth';
-import { isAdmin } from '@/lib/auth';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserCircle, Video } from 'lucide-react';
 
 const Index = () => {
-  if (isAdmin()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-6 fade-in">
-          <h1 className="text-4xl font-bold">Welcome Back, Admin</h1>
-          <div className="flex gap-4 justify-center">
-            <Link to="/admin">
-              <Button size="lg">Go to Dashboard</Button>
-            </Link>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={() => {
-                localStorage.removeItem('isAdmin');
-                window.location.reload();
-              }}
-            >
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
-      <div className="flex items-center justify-center p-4 bg-gradient-to-br from-secondary/50 to-background">
-        <div className="max-w-md space-y-6 fade-in">
-          <h1 className="text-4xl font-bold">Welcome to StreamSync</h1>
-          <p className="text-lg text-muted-foreground">
-            Join the stream or login as admin to start streaming.
-          </p>
-          <Link to="/stream">
-            <Button size="lg">Join Stream</Button>
-          </Link>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="max-w-4xl w-full space-y-8 fade-in">
+        <h1 className="text-4xl font-bold text-center mb-8">Welcome to StreamSync</h1>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCircle className="w-6 h-6" />
+                Join as Viewer
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Watch synchronized streams with other viewers
+              </p>
+              <Link to="/stream">
+                <Button className="w-full">Join Stream</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Video className="w-6 h-6" />
+                Start Streaming
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Create and manage your own stream
+              </p>
+              <Link to="/admin">
+                <Button className="w-full">Start Streaming</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
-      </div>
-      <div className="flex items-center justify-center p-4">
-        <AdminAuth />
       </div>
     </div>
   );
