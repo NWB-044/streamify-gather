@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -5,6 +6,8 @@ import cors from 'cors';
 import { watch } from 'fs';
 import { readdir, stat } from 'fs/promises';
 import { join, resolve, extname } from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
 const app = express();
 const httpServer = createServer(app);
@@ -32,7 +35,30 @@ try {
   console.error('Error creating directories:', err);
 }
 
-// Watch for file changes in both directories
+const getVideoMetadata = async (filePath) => {
+  try {
+    const stats = await stat(filePath);
+    const extension = extname(filePath).toLowerCase();
+    
+    // Basic metadata from file stats
+    const metadata = {
+      title: filePath.split('/').pop(),
+      fileSize: stats.size,
+      format: extension.slice(1),
+      duration: 0,
+      resolution: ''
+    };
+
+    // You could add ffprobe here for more detailed metadata
+    // This is just a basic implementation
+    
+    return metadata;
+  } catch (error) {
+    console.error('Error getting video metadata:', error);
+    return null;
+  }
+};
+
 const watchDirectory = (dir, type) => {
   watch(dir, { recursive: true }, async (eventType, filename) => {
     if (filename) {
@@ -40,6 +66,7 @@ const watchDirectory = (dir, type) => {
       try {
         const stats = await stat(filePath);
         if (stats.isFile()) {
+          const metadata = type === 'video' ? await getVideoMetadata(filePath) : null;
           io.emit('fileChanged', {
             type,
             event: 'added',
@@ -47,7 +74,8 @@ const watchDirectory = (dir, type) => {
               name: filename,
               path: filePath,
               size: stats.size,
-              lastModified: stats.mtimeMs
+              lastModified: stats.mtimeMs,
+              metadata
             }
           });
         }
@@ -65,7 +93,6 @@ const watchDirectory = (dir, type) => {
 watchDirectory(VIDEOS_DIR, 'video');
 watchDirectory(SUBTITLES_DIR, 'subtitle');
 
-// Get initial file lists
 async function getFiles(dir, formats) {
   try {
     const files = await readdir(dir);
@@ -75,11 +102,13 @@ async function getFiles(dir, formats) {
         .map(async file => {
           const filePath = join(dir, file);
           const stats = await stat(filePath);
+          const metadata = dir === VIDEOS_DIR ? await getVideoMetadata(filePath) : null;
           return {
             name: file,
             path: filePath,
             size: stats.size,
-            lastModified: stats.mtimeMs
+            lastModified: stats.mtimeMs,
+            metadata
           };
         })
     );
@@ -125,6 +154,10 @@ io.on('connection', async (socket) => {
     const videos = await getFiles(VIDEOS_DIR, SUPPORTED_VIDEO_FORMATS);
     const subtitles = await getFiles(SUBTITLES_DIR, SUPPORTED_SUBTITLE_FORMATS);
     socket.emit('fileList', { videos, subtitles });
+  });
+
+  socket.on('videoSync', (state) => {
+    socket.broadcast.emit('videoSync', state);
   });
 
   socket.on('logout', () => {
